@@ -1,4 +1,4 @@
-# Time Series Forecasting using Recurrent Neural Networks
+# Time Series Forecasting using Recurrent Neural Networks (Option 4)
 Implement and compare various simple recurrent neural networks for time series
 prediction.
 

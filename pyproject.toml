@@ -1,13 +1,15 @@
 [project]
 name = "assignment3"
 version = "0.1.0"
-description = "Add your description here"
+description = "Time series forecasting using recurrent neural networks"
 readme = "README.md"
 authors = [
     { name = "Willie Loftie-Eaton", email = "willieloea@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = []
+dependencies = [
+    "pandas>=3.0.6",
+]
 
 [project.scripts]
 assignment3 = "assignment3:main"

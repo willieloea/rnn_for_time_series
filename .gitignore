@@ -9,5 +9,16 @@ wheels/
 # Virtual environments
 .venv
 
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.pdf
+
 # Personal
 *.tmp*
+datasets/time_series/
+*.csv
