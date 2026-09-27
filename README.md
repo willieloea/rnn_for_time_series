@@ -27,9 +27,15 @@ Assignment requirements:
    - describe which RNN performed best
 
 ## 1. Finding datasets
+See [this file](./datasets/about.md) to see which datasets I chose and some of
+their properties.
+
 ## 2. Cross-validation strategy
+expanding window and sliding window during training. chronological holdout for
+final evaluation.
+
 ## 3. Data pre-processing
 ## 4. Implementing RNNs
 ## 5. Ensuring ideal-fit
 ## 6. Empirical process
-## 7. Discuss resuts
+## 7. Discuss results
