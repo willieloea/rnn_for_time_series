@@ -13,6 +13,65 @@
 \section{Background}
 \label{sec:background}
 
+\subsection{Neural networks}
+An artificial neural network learns a mapping from input features to outputs
+using interconnected processing units called neurons. In a feedforward network,
+information passes from an input layer through one or more hidden layers to an
+output layer. Each processing neuron forms a weighted sum of its inputs, adds a
+bias, and applies an activation function~\cite[Sec.~8.2]{Kelleher2020}:
+\begin{equation}
+  a = \phi\left(\sum_{i=1}^{m} w_i x_i + b\right),
+\end{equation}
+where $x_i$ are the inputs, $w_i$ are connection weights, $b$ is the bias, and
+$\phi$ is the activation function. Nonlinear hidden-layer activations allow the
+network to represent nonlinear relationships; stacking purely linear layers
+would still produce a linear mapping, apart from the bias terms.
+
+During supervised training, a forward pass produces a prediction, which is
+compared with the known target using a loss function. Backpropagation applies
+the chain rule to calculate the loss gradients with respect to the weights and
+biases. An optimisation algorithm, such as gradient descent, then uses these
+gradients to adjust the parameters. Repeating this process over training
+examples allows the network to learn the input--output
+relationship~\cite[Sec.~8.3]{Kelleher2020}. The output layer depends on the task:
+numerical forecasting can use a single output unit with a linear activation.
+
+\subsection{Recurrent neural networks}
+Recurrent neural networks (RNNs) process ordered sequences using feedback
+connections that carry information between time steps. The same weights are
+reused at each step, while the network's state changes as new observations are
+processed. Consequently, a prediction can depend on earlier observations as
+well as the current input. This state acts as a learned summary of the sequence,
+rather than an explicit copy of every previous observation~\cite{Kelleher2020}.
+
+In an \emph{Elman RNN}~\cite{ELMAN1990179}, context units retain the previous
+hidden-layer activations. These are supplied through weighted connections to the
+hidden layer alongside the current input. A simple state update is
+\begin{equation}
+  \mathbf{h}_t = \phi\left(
+    W_x\mathbf{x}_t + W_h\mathbf{h}_{t-1} + \mathbf{b}_h
+  \right),
+\end{equation}
+where $\mathbf{x}_t$ is the current input and $\mathbf{h}_{t-1}$ is the previous
+hidden state. The matrices $W_x$ and $W_h$ and bias $\mathbf{b}_h$ are learned
+parameters. Because the previous state depends on earlier states, information
+can influence predictions beyond a single time step.
+
+A \emph{Jordan RNN}~\cite{Jordan1997SerialOA} instead feeds output activations
+back through context units to the hidden layer. Some Jordan formulations also
+include self-connections in the context units, allowing older context to
+persist.
+
+A combined \emph{multi-recurrent} architecture can incorporate both hidden-state
+and output feedback. These feedback signals come from earlier time steps;
+the unknown target being predicted is not available as an input. The precise
+context update must be specified when defining each architecture.
+
+RNNs can be trained using backpropagation through time, which follows the
+dependencies across the sequence to calculate gradients. Gradients may shrink or
+grow excessively over long sequences, making long-term dependencies difficult to
+learn.
+
 \subsection{Cross-validation for time series data}
 Cross-validation estimates how well a model generalises to unseen observations
 and supports the selection of models and hyperparameters. Standard shuffled
