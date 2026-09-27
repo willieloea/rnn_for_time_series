@@ -13,8 +13,26 @@
 \section{Background}
 \label{sec:background}
 
-Logar et al.~\cite{298716} compared learning algorithms for recurrent neural networks.
+\subsection{Cross-validation for time series data}
+Cross-validation estimates how well a model generalises to unseen observations
+and supports the selection of models and hyperparameters. Standard shuffled
+$k$-fold cross-validation is unsuitable for forecasting because it can place
+future observations in the training set while evaluating predictions for the
+past. Time-series validation instead preserves chronological order: each model
+is trained on earlier observations and evaluated on a subsequent period.
 
-\subsection{}
+In walk-forward validation, the evaluation period moves forward between folds.
+An \emph{expanding window} retains all preceding training observations, whereas
+a \emph{sliding window} retains a fixed amount of recent history and discards
+older observations. Expanding windows make use of increasing amounts of data;
+sliding windows can be useful when older patterns become less representative.
+Errors across successive validation periods provide a broader assessment than
+a single split, and the forecast horizon should match the intended prediction
+task.
 
-\subsubsection{}
+A \emph{chronological holdout} reserves a final period for evaluation after
+model selection. Although this is not itself cross-validation, it complements
+the repeated validation used for tuning. To prevent information leakage,
+learned preprocessing operations, such as scaling, must be fitted using only
+the training portion of each fold. The final holdout must not influence
+hyperparameter selection.

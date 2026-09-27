@@ -31,7 +31,7 @@ Miscellaneous:
   seasonal baseline that predicts the value from the same month of the previous
   year, and report errors after inverting any transformations.
 
-## Mackey-Glass - `mg_ts.csv`
+## Mackey-Glass
 To do.
 
 ## Melbourne minimum temperatures - `min_temps_cleaned.csv`
