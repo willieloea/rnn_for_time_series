@@ -1,18 +1,35 @@
 # Time Series Forecasting using Recurrent Neural Networks
+Implement and compare various simple recurrent neural networks for time series
+prediction.
+
 Assignment requirements:
 
-- Implement and compare 3 recurrent neural networks for time series prediction
-- Find and describe 5 time series datasets.
-   - Stationary: Statistical properties remain constant
-   - Non-stationary: Statistical properties change over time
-- Apply cross-validation to analyse the performance of the models
+1. Find 5 time series datasets
+   - describe them
+   - indicate if they are stationary or non-stationary
+2. Know how to implement cross-validation for time series data
+   - https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
+   - describe the cross-validation approach used
+3. Pre-process the selected datasets
+   - describe and justify what you did
+4. Implement three recurrent neural networks:
+   - Elman RNN, Jordan RNN, multi-RNN
+   - Describe each neural network
+   - Describe the optimization algorithm and loss function
+5. Ensure ideal-fit during model training
+   - Describe how underfitting and overfitting was avoided.
+6. Describe your empirical process
+   - how hyperparameters were set
+   - the neural network architectures
+   - performance measures
+   - process to determine the best neural network for each dataset
+7. Discuss results
+   - describe which RNN performed best
 
-To do:
-
-- Understand ERNNs, JRNNs, and MRNNs
-- Get 5 datasets (stationary and non-stationary)
-- Understand cross-validation
-- Know how to avoid underfitting and overfitting
-- Know how to train the networks
-- Know what loss function to use
-
+## 1. Finding datasets
+## 2. Cross-validation strategy
+## 3. Data pre-processing
+## 4. Implementing RNNs
+## 5. Ensuring ideal-fit
+## 6. Empirical process
+## 7. Discuss resuts
