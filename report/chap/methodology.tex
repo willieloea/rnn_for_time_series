@@ -1,7 +1,237 @@
-% In this section you discuss how you have approached, implemented and solved
-% your assignment problem. You provide pseudo code where necessary (only for new
-% algorithms) and discussions of the solutions that you have implemented. This
-% is also the section where your discussion specializes on the concepts
-% mentioned in the background section. Be very specific in your discussions in
-% this section, to clearly describe what you have done and how you have done it.
 \section{Methodology and Implementation}
+\label{sec:methodology}
+
+This section describes the five datasets used, the data pipeline, the three
+recurrent architectures, and the training, model-selection and evaluation procedures.
+
+The implementation separates data preparation, recurrent models, training and
+evaluation into shared Python modules. NumPy and pandas provide the data
+pipeline, and PyTorch implements the networks and automatic differentiation. All
+three architectures use the same eligible examples, scaling rules, loss function
+and evaluation procedure. Their feedback connections and validation-selected
+hidden sizes differ.
+
+\subsection{Dataset Overview}
+The following five datasets are used throughout the report. These short names
+identify the forecasting tasks; Section~\ref{sec:datasets} provides their sources,
+plots and more detailed discussion of their temporal properties.
+
+
+\noindent\textbf{Air passengers:} Monthly international airline passenger totals,
+  measured in thousands. The task is to predict the next month's total from
+  previous totals in a series with growth and annual seasonality.
+
+\noindent\textbf{Minimum temperatures:} Daily minimum temperatures in Melbourne,
+  measured in degrees Celsius. The task is to predict the next day's minimum
+  from past temperatures, which reflect annual seasonality and daily variation.
+
+\noindent\textbf{Smart home:} Environmental sensor measurements from a monitored house,
+  recorded at 15-minute intervals. Indoor and outdoor sensor histories are used
+  to predict dining-room and bedroom temperatures at the next interval.
+
+\noindent\textbf{Sunspots:} Monthly mean total sunspot numbers, used as an index of solar
+  activity. The task is to predict the next month's value from previous values
+  in a series with approximately 11-year cycles.
+
+\noindent\textbf{AR(2):} A synthetic second-order autoregressive series in which each
+  value depends on its two predecessors and added random noise. It provides a
+  controlled stationary forecasting task with known generating dynamics.
+
+\subsection{Forecasting Task and Data Preparation}
+Let $\mathbf{x}_t\in\mathbb{R}^{d}$ contain the input features available at
+forecast origin $t$, and let $\mathbf{y}_{t+q}\in\mathbb{R}^{m}$ contain the
+targets $q$ steps ahead. An example consists of
+\begin{equation}
+ \mathbf{X}_t=(\mathbf{x}_{t-L+1},\ldots,\mathbf{x}_t),
+ \qquad \text{target}=\mathbf{y}_{t+q},
+\end{equation}
+where $L$ is the lookback. A minibatch is a group of $B$ training examples
+processed together to compute one weight update. Its input array has shape $B\times L\times d$, and its
+predictions have shape $B\times m$. The pipeline supports configurable inputs,
+targets and horizons, but every reported experiment uses $q=1$. Passenger,
+minimum-temperature, sunspot and AR(2) experiments use the target's own history
+($d=m=1$).
+Smart-home experiments use dining-room and bedroom temperature,
+outdoor temperature and outdoor humidity ($d=4$), predicting both indoor
+temperatures jointly ($m=2$).
+
+Dataset-specific scripts prepare regular time indices before window construction.
+Passenger values require no imputation. The minimum-temperature cleaner removes
+question-mark prefixes from three numeric entries, restores two missing dates
+and forward-fills them. Smart-home recordings are processed separately: two
+missing 15-minute records are inserted and forward-filled, but a long gap
+between recordings is preserved. Observation flags are assigned before filling so
+that inserted values can serve as input history without becoming ground-truth
+targets. The sunspot cleaner preserves the supplied target series, including a
+historically interpolated February 1824 value, while retaining quality metadata
+separately from model inputs. AR(2) samples are generated directly with no
+missing values; the generator settings are given in Section~\ref{sec:datasets}.
+
+The shared loader validates timestamps and selected numeric features and assigns
+a segment identifier to each uninterrupted recording. Any example whose
+input-to-target interval crosses a segment boundary is rejected. Examples with no
+observed target are also rejected. Validation and test windows may use preceding training
+observations as context, since those observations are available at the forecast
+origin.
+
+Each input and target feature is standardized separately:
+\begin{equation}
+ z_{t,j}=\frac{x_{t,j}-\mu_j}{s_j}.
+\end{equation}
+The mean $\mu_j$ and population standard deviation $s_j$ are fitted using
+observed rows in the current training interval only, before overlapping windows
+are constructed. Thus repeated appearances of a row in different windows do not
+change its scaling weight. Constant features use $s_j=1$. The same fitted
+transformation is applied to the corresponding validation or test interval. No
+differencing, logarithmic transformation or seasonal adjustment is used, and
+predictions are inverse-transformed before reporting errors in original units.
+
+\subsection{Recurrent Network Implementations}
+Each network has one hidden layer of $H$ tanh units and a linear output layer.
+Within an input window, let $k$ index the sequence position,
+$\mathbf{h}_k\in\mathbb{R}^{H}$ the hidden activation, and
+$\mathbf{o}_k\in\mathbb{R}^{m}$ the output. The Elman network uses hidden-state
+feedback:
+\begin{equation}
+ \mathbf{h}_k=\tanh(W_x\mathbf{x}_k+W_h\mathbf{h}_{k-1}+\mathbf{b}_h).
+\end{equation}
+The Jordan network uses output feedback:
+\begin{equation}
+ \mathbf{h}_k=\tanh(W_x\mathbf{x}_k+W_o\mathbf{o}_{k-1}+\mathbf{b}_h).
+\end{equation}
+The multi-recurrent network combines both paths:
+\begin{equation}
+ \mathbf{h}_k=\tanh(W_x\mathbf{x}_k+W_h\mathbf{h}_{k-1}
+                         +W_o\mathbf{o}_{k-1}+\mathbf{b}_h).
+\end{equation}
+All three compute
+\begin{equation}
+ \mathbf{o}_k=W_y\mathbf{h}_k+\mathbf{b}_y,
+ \qquad \hat{\mathbf{y}}_{t+1}=\mathbf{o}_L.
+\end{equation}
+Here $W_x$ is $H\times d$, $W_h$ is $H\times H$, $W_o$ is $H\times m$, and
+$W_y$ is $m\times H$. Each implementation has one hidden bias and one output
+bias; feedback projections have no additional biases. The output layer is linear
+because the task is regression on standardized real-valued targets.
+
+Hidden and output contexts are initialized to zero independently for each window.
+Context stores a one-step copy; no separate leaky context self-connection is
+used. Jordan and multi-recurrent feedback always uses the network's own
+intermediate output, not a supplied ground-truth output. Only the last output is
+directly supervised. Intermediate outputs and hidden states remain attached to
+the computation graph, allowing gradients to propagate through all $L$ steps.
+Xavier-uniform initialization~\cite{pmlr-v9-glorot10a} is used for the input,
+output and output-feedback matrices, orthogonal initialization~\cite{saxe2014exactsolutionsnonlineardynamics}
+for hidden-feedback matrices, and zero initialization for biases.
+
+\subsection{Loss and Optimization}
+For a batch of standardized targets, let $M_{ij}$ be one when target $j$ of
+example $i$ is observed and zero otherwise. The shared loss is masked mean
+squared error:
+\begin{equation}
+ \mathcal{L}=\frac{\sum_{i=1}^{B}\sum_{j=1}^{m}
+ M_{ij}(\hat z_{ij}-z_{ij})^2}{\sum_{i=1}^{B}\sum_{j=1}^{m}M_{ij}}.
+\end{equation}
+In code, observed entries are selected before subtraction to prevent masked
+placeholders from contaminating the calculation. This gives each observed
+standardized target entry equal weight.
+
+Gradients are computed by backpropagation through time using PyTorch autograd.
+Adam updates the weights with learning rate $0.001$ and its default moment
+parameters. Batches contain up to 32 examples, and the total gradient norm is
+clipped to 1.0 before each update. The search allows at most 100 epochs. There
+is no dropout or weight decay. Examples are shuffled within the training
+partition at each epoch, while the time order inside each window is preserved.
+This does not randomly mix training and validation periods: the partitions remain
+chronological, and recurrent context is reset between windows.
+
+\subsection{Chronological Validation and Model Selection}
+The last block of each dataset is reserved as a final test set before tuning.
+The earlier development interval is evaluated using expanding-window
+cross-validation: the training prefix grows, and each following validation block
+is scored once. The step between folds equals the validation-block length.
+Table~\ref{tab:split-settings} gives the actual row counts and input windows.
+Only complete validation blocks are emitted; any development rows left after the
+last complete block are still available for final training. Sliding-window
+validation is not used in the reported experiments.
+
+\begin{table*}[t]
+\centering
+\small
+\caption{Preprocessing and temporal split settings. All sizes are row counts,
+not numbers of constructed examples. The forecast horizon is one step
+throughout.}
+\label{tab:split-settings}
+\begin{tabular}{lrrrrr}
+\toprule
+Dataset & Lookback & Initial training & Validation block & Reserved test & CV folds \\
+\midrule
+Air passengers & 12 & 72 & 12 & 24 & 4 \\
+Minimum temperatures & 30 & 1461 & 365 & 730 & 4 \\
+Smart home & 96 & 1344 & 288 & 672 & 7 \\
+Sunspots & 132 & 2000 & 264 & 264 & 4 \\
+AR(2) & 2 & 2000 & 500 & 1000 & 4 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Training duration is chosen inside each outer training fold, without consulting
+its outer validation targets. The final 15\% of that training interval, rounded
+up to whole rows, forms an inner early-stopping block. Separate scalers are
+fitted on the inner fitting prefix. After each epoch, the inner stopping loss is
+evaluated; an improvement must exceed $10^{-5}$ in standardized MSE. Training
+ends after ten consecutive epochs without such improvement, or at 100 epochs,
+and the epoch of the best qualifying improvement is retained.
+
+The inner model is then discarded. A new model and optimizer are initialized
+with the same seed, scalers are fitted on the entire outer training interval,
+and the model is trained for the retained number of epochs. Only this refitted
+model is scored on the outer validation block. This separates the choice of
+training duration from the validation score used to compare hidden sizes.
+
+For each architecture, hidden sizes $H\in\{8,16,32\}$ are compared using seed
+42. A fold's selection score is the mean of its per-target root mean square
+errors (RMSEs) in
+training-standardized units; fold scores are then averaged with equal weight.
+This avoids letting target units determine the multivariate ranking. It differs
+from pooling all residuals before computing a single RMSE. Each architecture
+retains its own lowest-scoring hidden size, with exact ties resolved in favour
+of the smaller size. Across the five datasets, this produces 207 outer trials,
+each including inner selection and outer refitting. Early stopping and the size
+search constrain fitting, but do not guarantee the absence of underfitting or
+overfitting.
+
+\subsection{Final Evaluation and Reproducibility}
+For each selected architecture and hidden size, the final epoch count is the
+integer part of the median selected epoch across its cross-validation (CV)
+folds, with a minimum of
+one. New models are fitted on the complete development interval using seeds 11,
+22 and 33 and development-only scalers. No test loss is used for early stopping
+or model selection. This gives 45 final fits. Predictions are made one step
+ahead using the latest available observations; the evaluation does not
+recursively substitute model predictions for subsequently observed inputs.
+
+For target $j$, errors in original units are summarized over the observed test
+indices $\mathcal{O}_j$:
+\begin{align}
+ \mathrm{MAE}_j &= \frac{1}{|\mathcal{O}_j|}
+     \sum_{i\in\mathcal{O}_j}|\hat y_{ij}-y_{ij}|,\\
+ \mathrm{RMSE}_j &= \sqrt{\frac{1}{|\mathcal{O}_j|}
+     \sum_{i\in\mathcal{O}_j}(\hat y_{ij}-y_{ij})^2}.
+\end{align}
+(MAE stands for mean absolute error.)
+Persistence predicts each target's latest available value,
+$\hat{\mathbf{y}}_{t+1}=\mathbf{y}_t$, and is evaluated on the same eligible
+targets. Metrics are calculated separately for each final fit and reported as
+their mean and sample standard deviation across seeds, rather than as the
+performance of an ensemble. Both smart-home outputs are reported separately.
+
+The runner saves configurations, data and implementation hashes, software
+versions, fitted scalers, model checkpoints, epoch histories and timestamped
+predictions. These artifacts support resumption and checking of experiment
+consistency. The results-generation script recomputes errors from all saved
+observed predictions and verifies identical evaluation rows across architectures
+and seeds before creating report tables and figures. Automated checks also cover
+temporal splitting, preprocessing leakage, masking, recurrent equations,
+gradient propagation and independent window state. These checks establish
+implementation consistency.

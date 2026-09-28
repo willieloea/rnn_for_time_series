@@ -1,8 +1,26 @@
-% Start this section by stating again the goals of the report, what was done and
-% how. Very general conclusions about the assignment that you have done are
-% given. This section “answers” the questions and issues that you have raised
-% and investigated. This is the final section in your document so be sure that
-% all the issues raised up until now are answered here. This is also the perfect
-% section to discuss what you have learnt in doing this assignment, and to
-% provide any ideas for future work.
 \section{Conclusion}
+\label{sec:conclusion}
+
+This section draws together the main findings, their practical implications
+and directions for further work.
+
+This study compared three recurrent neural network architectures across five
+time-series forecasting problems. The shared pipeline provided a consistent way
+to prepare data, select model settings and evaluate predictions on later
+observations. The experiments demonstrate that forecasting performance depends
+on the dataset and evaluation conditions, rather than on feedback structure
+alone.
+
+No architecture was uniformly best. Although the networks improved on
+persistence in mean RMSE for four datasets, persistence performed better on the
+airline-passenger test period (Fig.~\ref{fig:final-rmse}). Several differences
+between architectures were small, so their numerical rankings should not be
+treated as conclusive evidence of superiority. These findings highlight the
+importance of simple baselines and careful interpretation of results.
+
+The conclusions are limited to the tested configurations, data periods and
+one-step forecast horizon. Further work could examine stronger baselines, longer
+horizons and additional evaluation periods. For embedded applications, practical
+measurements of memory use, latency and energy would also be needed. The main
+lesson is that selecting a forecasting model requires considering accuracy,
+complexity and the intended use together.

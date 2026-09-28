@@ -21,3 +21,7 @@ wheels/
 *.tmp*
 datasets/time_series/
 *.csv
+*.json
+*.pt
+*.svg
+*.png

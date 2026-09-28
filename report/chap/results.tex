@@ -7,3 +7,210 @@
 % be expected?”, “why did these results occur?” and “would different
 % circumstances lead to different results?”.
 \section{Results and Discussion}
+\label{sec:results}
+
+This section compares the final forecasting results with persistence, discusses
+the findings for each dataset, and considers the limitations of the comparison.
+
+Table~\ref{tab:final-settings} records the model settings selected on
+development data. Each selected model was fitted afresh using initialization
+seeds 11, 22 and 33 and evaluated on the reserved chronological test period.
+Table~\ref{tab:final-errors} reports mean absolute error (MAE) and root mean
+squared error (RMSE) in original units, with the sample standard deviation
+across those three fits. This variation reflects initialization on a fixed test
+period; it is not a confidence interval for performance on other time periods.
+Both smart-home temperature targets are reported separately, and the two imputed
+test targets per room are excluded from scoring.
+
+\input{tables/final_settings}
+\input{tables/final_errors}
+
+Figure~\ref{fig:final-rmse} divides each test RMSE by the corresponding
+persistence RMSE, making improvements over that baseline visible without
+combining incompatible physical units. All three RNNs improve on persistence in
+mean RMSE for minimum temperatures, both smart-home targets, sunspots and AR(2).
+For air passengers, persistence outperforms every RNN on both metrics. The
+lowest mean RMSE among RNNs is achieved by Multi for air passengers and both
+smart-home targets, Elman for minimum temperatures and sunspots, and Jordan for
+AR(2). These are descriptive rankings; small differences, particularly for
+AR(2), do not establish a statistically significant advantage. Rankings also
+depend on the error measure: Jordan has the lowest RNN MAE for air passengers.
+
+\subsection{Interpretation by Dataset}
+
+\subsubsection{Air passengers}
+Table~\ref{tab:final-errors} provides the clearest example of why a simple
+baseline is necessary. For air passengers, Multi has the lowest RNN test RMSE,
+76.290 thousand passengers, but its error is still 47.3\% higher than
+persistence's 51.782, as also shown by the passenger panel of
+Fig.~\ref{fig:final-rmse}. Elman, which ranked first during cross-validation,
+does not retain that ranking on the final period. Thus, the architecture
+selected as best on development folds need not remain best on later data.
+
+The passenger panel in Fig.~\ref{fig:final-forecasts} shows that the seed-11 RNN
+predictions underestimate the two summer peaks. The development data reach a
+maximum of 505 thousand passengers, whereas the test data reach 622 thousand.
+This requires extrapolation to levels beyond those seen during fitting, in a
+series whose seasonal amplitude also grows. Persistence can track the changing
+level using the most recent observation, although it reacts one month late to
+changes. The RNNs' peak underestimation is consistent with difficulty
+extrapolating this growth. It does not, by itself, establish whether limited
+capacity, optimization, or the chosen representation is responsible.
+
+Only 120 monthly rows are available before the holdout, and
+Table~\ref{tab:final-settings} shows that the selected Elman and Jordan training
+durations are 99 epochs, close to the 100-epoch search limit. These facts limit
+any claim that training reached an ideal fit. Table~\ref{tab:final-errors} shows
+that Jordan has lower MAE than the other RNNs but higher RMSE than Multi: its
+average absolute error is smaller while its larger errors receive a greater
+penalty under RMSE. A seasonal baseline, a trend-aware statistical model, or
+transformations selected on development data would provide useful additional
+comparisons. They were not tested here.
+
+\subsubsection{Minimum temperatures}
+For minimum temperatures, Table~\ref{tab:final-errors} shows that Elman reduces
+test RMSE from 2.481 to 2.203~$^\circ$C, an 11.2\% improvement over persistence.
+Multi is nearly identical at 2.208~$^\circ$C; their difference of approximately
+0.004~$^\circ$C is small compared with the overall forecast error. Jordan also
+improves on persistence, but less strongly. The minimum-temperature panel in
+Fig.~\ref{fig:final-forecasts} shows that the RNNs follow much of the local
+variation while smoothing some sharp changes. This is consistent with learning
+predictable short-term dependence while leaving substantial daily variation
+unexplained.
+
+The selected Elman and Multi models both use eight hidden units
+(Table~\ref{tab:final-settings}). This shows that the smallest tested size was
+sufficient to give their best validation scores under this setup; it does not
+prove that every larger network overfit. Training curves and additional
+controlled comparisons would be needed to distinguish overfitting from
+optimization variability. Furthermore, the 30-day input window is shorter than
+an annual cycle. These results therefore do not demonstrate that the networks
+learned annual seasonality explicitly. Their small seed-to-seed standard
+deviations indicate repeatable fitting on this split, not guaranteed robustness
+to other climates or future periods.
+
+\subsubsection{Smart-home temperatures}
+Table~\ref{tab:final-errors} shows that Multi obtains the lowest mean errors for
+both rooms. Its RMSE falls from the persistence baseline's 0.1345 to
+0.0332~$^\circ$C for the dining room and from 0.1347 to 0.0391~$^\circ$C for the
+bedroom: reductions of 75.3\% and 70.9\%, respectively, visible in the two
+smart-home panels of Fig.~\ref{fig:final-rmse}. Nevertheless, its bedroom RMSE
+is only slightly below Elman's 0.0395~$^\circ$C. The dining-room result shows a
+clearer numerical separation, while Elman's larger standard deviation there
+indicates greater sensitivity to initialization in these three fits.
+
+These large relative improvements are plausible for a smoothly changing
+temperature signal forecast only 15 minutes ahead. The models receive a day's
+history of both indoor temperatures, outdoor temperature and outdoor humidity,
+whereas persistence uses only the latest target value. The two smart-home panels
+in Fig.~\ref{fig:final-forecasts} show smooth rises and falls that a model can
+potentially anticipate from recent changes. However, the experiment includes no
+input-feature ablation or simpler trend-extrapolation baseline, so it cannot
+determine whether the improvement comes from extra sensors, the longer history,
+or the recurrent architecture itself. All three RNNs have the same inputs,
+making their mutual comparison more controlled than their comparison with
+persistence.
+
+The holdout covers approximately one week in the same monitored house. Accuracy
+on this short interval does not establish performance across seasons, other
+buildings, or thermostat interventions. In particular, a 15-minute forecast
+evaluated using newly observed inputs at every step is a substantially narrower
+task than predicting indoor temperature several hours ahead without further
+measurements.
+
+\subsubsection{Sunspots}
+For sunspots, Table~\ref{tab:final-errors} gives Elman the lowest mean RMSE,
+16.793, compared with 17.834 for persistence, a 5.8\% reduction. Jordan is close
+at 16.912, and Multi is less accurate at 17.515. The metric matters here too:
+although Multi improves on persistence in RMSE, its MAE is worse, 12.778 versus
+12.595. A reduction in squared-error sensitivity to large misses does not
+necessarily improve the typical absolute error.
+
+The 132-month input window (Table~\ref{tab:split-settings}) makes roughly one
+solar cycle available to each prediction. The sunspot panel of
+Fig.~\ref{fig:final-forecasts} illustrates the one-step predictions tracking
+much of the changing level while missing some abrupt month-to-month changes.
+However, the target remains the next month's value, and persistence is already a
+strong comparator. The modest improvement does not establish that the networks
+can predict the timing or amplitude of an entire future solar cycle. The test
+period spans about two nominal cycles, which also limits evidence about
+performance across different long-term solar regimes.
+
+\subsubsection{Synthetic AR(2)}
+For AR(2), the three mean test RMSEs in Table~\ref{tab:final-errors} lie between
+1.0185 and 1.0195, compared with 1.0868 for persistence. Jordan's numerical lead
+corresponds to a 6.3\% improvement over persistence, but the separation between
+architectures is smaller than their individual seed-to-seed standard deviations.
+Cross-validation slightly favoured Multi instead. The nearly coincident markers
+in the AR(2) panel of Fig.~\ref{fig:final-rmse} illustrate this small
+separation, while its forecast panel in Fig.~\ref{fig:final-forecasts} shows
+similar prediction trajectories for the displayed seed. These near-ties provide
+little evidence for a practically meaningful architecture advantage on this
+task.
+
+This is consistent with the deliberately simple generating process: the
+conditional mean depends linearly on only the two supplied observations. With
+independent innovations of variance one, the known-coefficient conditional-mean
+predictor has population MSE one and hence population RMSE one. The RNN errors
+are close to this theoretical reference. However, it is not an exact lower bound
+for an empirical RMSE on a finite test sample, and the oracle's realized test
+error has not been computed. Only one generated realization and one coefficient
+setting are used, so the result should not be generalized to arbitrary
+stationary processes or long-memory problems.
+
+\subsection{Scope and Limitations of the Comparison}
+The experiment compares complete training configurations rather than isolating
+feedback structure alone. Hidden sizes are selected separately for each
+architecture, and equal hidden sizes do not imply equal numbers of parameters.
+For example, Table~\ref{tab:final-settings} shows that the smart-home Jordan
+model has 290 trainable parameters, compared with 1,250 for Elman and 1,314 for
+Multi. Its competitive errors therefore represent a potentially useful
+accuracy-size trade-off for embedded applications. Parameter counts alone do not
+establish inference latency, energy consumption or memory requirements on a
+target device; no embedded deployment benchmark was performed.
+
+The search is limited to hidden sizes 8, 16 and 32, one hidden layer, fixed
+input windows and a shared optimizer configuration. Cross-validation uses one
+initialization seed, while the final fits use three. Consequently,
+hyperparameter selection may itself depend on initialization, and the final
+standard deviations do not quantify that selection uncertainty. Sliding-window
+validation is supported but was not evaluated. A different training window,
+forecast horizon or training budget could alter the rankings. For each model,
+the final epoch count is derived from inner early-stopping results; it is not
+selected using test loss and is not guaranteed to be optimal for the full
+development period.
+
+The models reset recurrent context for every input window. The reported task is
+therefore prediction from a finite recent history, with actual observations
+becoming available before each subsequent forecast. It does not test persistent
+state across the entire series or recursive forecasting without new
+observations. Data quality also constrains interpretation: masking avoids
+scoring explicitly imputed targets, but forward-filled values can still occur in
+input histories, and retained source values may themselves be uncertain or
+provisional.
+
+Finally, the test errors share timestamps and are temporally dependent, and the
+three seeds all use the same data split. No formal significance test was
+performed; neither a small difference in means nor overlap of seed standard
+deviations establishes significance or equivalence. The fixed-seed excerpts in
+Fig.~\ref{fig:final-forecasts} illustrate behaviour but cannot replace the
+full-period scores in Table~\ref{tab:final-errors}. Additional chronological
+holdouts, more initialization seeds, stronger non-neural baselines and
+matched-parameter comparisons would strengthen future conclusions. Within the
+present design, no architecture is uniformly best: the relative benefit depends
+on the dataset, target and error measure, and persistence remains the strongest
+tested method for air passengers.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\textwidth]{figures/final_rmse.pdf}
+  \caption{Final test RMSE relative to persistence, with mean $\pm$ one sample standard deviation across three initialization seeds. Values below the dashed line indicate improvement over persistence. Panels have independent vertical scales and include both smart-home targets.}
+  \label{fig:final-rmse}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.97\textwidth]{figures/final_forecasts.pdf}
+  \caption{One-step-ahead forecast examples using initialization seed 11 for every architecture. Each panel shows the first 96 test rows, or all 24 for air passengers, without selecting an interval based on model performance. Curves represent individual models, not an ensemble. Actual observations become available before subsequent forecasts. Full test periods, rather than these display excerpts, are used for all reported metrics. AR(2) time labels are artificial.}
+  \label{fig:final-forecasts}
+\end{figure*}

@@ -1,10 +1,22 @@
-% The introduction sets the stage for the remainder of your report. You usually
-% have very general statements here. The introduction prepares the reader for
-% what to expect from reading your report. In general, the introduction should
-% be a summary of your entire report. Start by stating the context, moving
-% towards the goals. Then elaborate on how these goals have been obtained, what
-% you have done. Give a motivation for why this is done. Summarize the main
-% observations of the study. You basically give a teaser to the reader, to
-% convince the reader to continue reading the report. Give an outline of the
-% remainder of the report.
 \section{Introduction}
+\label{sec:introduction}
+
+Time-series forecasting uses past observations to predict future values.
+Recurrent neural networks (RNNs) approach this task by carrying information
+between sequence positions, allowing predictions to depend on earlier
+observations. This study compares Elman, Jordan and multi-recurrent networks to
+investigate how different feedback structures affect forecasting accuracy.
+
+The comparison uses five datasets: airline passengers, minimum temperatures,
+smart-home sensors, sunspots and a synthetic autoregressive series. Together,
+they provide different patterns of temporal dependence. A shared data-processing
+and training procedure supports a consistent comparison, with chronological
+validation used to select model settings and separate test periods used for
+final evaluation. A simple persistence forecast provides a reference against
+which to assess the value of the networks.
+
+The results show that no architecture performs best in every setting, and that
+recurrent models do not always outperform persistence
+(Table~\ref{tab:final-errors}). The report introduces the relevant background,
+describes the implementation and datasets, and discusses these findings
+alongside the limitations of the experiments.

@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\centering
+\footnotesize
+\caption{Empirical Stationarity and Descriptive Diagnostics for the Four Time Series Datasets}
+\label{tab:stationarity}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lccccccp{4.2cm}}
+\toprule
+\textbf{Dataset} & \textbf{Obs ($N$)} & \textbf{Mean $\pm$ Std} & \textbf{ACF(1)} & \textbf{ACF(Cycle)} & \textbf{ADF ($p$)} & \textbf{KPSS ($p$)} & \textbf{Primary Evidence} \\
+\midrule
+Air Passengers & 144 & 280.3 $\pm$ 119.5 & 0.948 & 0.760 (12) & 0.82 (0.992) & 1.65 (0.010) & \textbf{Non-stationary} (trend and growing variance); ADF $p>0.99$, KPSS $p<0.01$. \\
+Melbourne Min Temps & 3,652 & 11.2 $\pm$ 4.1 & 0.774 & 0.480 (365) & -4.44 (0.000) & 0.06 (0.100) & \textbf{Non-stationary} (annual cycle $s=365$, $\text{ACF}(365)=0.48$); time-varying mean. \\
+Smart Home (Dining) & 2,764 & 19.2 $\pm$ 2.9 & 0.999 & 0.742 (96) & -5.34 (0.000) & 1.17 (0.010) & \textbf{Non-stationary} (diurnal cycle $s=96$, $\text{ACF}(96)=0.74$); level shifts, KPSS $p<0.01$. \\
+SILSO Sunspots & 3,332 & 82.2 $\pm$ 67.6 & 0.918 & 0.553 (132) & -10.71 (0.000) & 0.11 (0.100) & \textbf{Cyclical / Mixed} (solar cycle $s\approx 132$, $\text{ACF}(132)=0.55$); decadal amplitude modulation. \\
+\bottomrule
+\end{tabular*}
+\end{table*}

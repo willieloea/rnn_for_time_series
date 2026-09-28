@@ -13,6 +13,9 @@
 \section{Background}
 \label{sec:background}
 
+This section introduces neural networks, recurrent feedback and time-series
+validation, providing the concepts used in the implementation and evaluation.
+
 \subsection{Neural networks}
 An artificial neural network learns a mapping from input features to outputs
 using interconnected processing units called neurons. In a feedforward network,
@@ -24,15 +27,14 @@ bias, and applies an activation function~\cite[Sec.~8.2]{Kelleher2020}:
 \end{equation}
 where $x_i$ are the inputs, $w_i$ are connection weights, $b$ is the bias, and
 $\phi$ is the activation function. Nonlinear hidden-layer activations allow the
-network to represent nonlinear relationships; stacking purely linear layers
-would still produce a linear mapping, apart from the bias terms.
+network to represent nonlinear relationships.
 
 During supervised training, a forward pass produces a prediction, which is
 compared with the known target using a loss function. Backpropagation applies
 the chain rule to calculate the loss gradients with respect to the weights and
 biases. An optimisation algorithm, such as gradient descent, then uses these
 gradients to adjust the parameters. Repeating this process over training
-examples allows the network to learn the input--output
+examples allows the network to learn the input-output
 relationship~\cite[Sec.~8.3]{Kelleher2020}. The output layer depends on the task:
 numerical forecasting can use a single output unit with a linear activation.
 
@@ -63,9 +65,7 @@ include self-connections in the context units, allowing older context to
 persist.
 
 A combined \emph{multi-recurrent} architecture can incorporate both hidden-state
-and output feedback. These feedback signals come from earlier time steps;
-the unknown target being predicted is not available as an input. The precise
-context update must be specified when defining each architecture.
+and output feedback. These feedback signals come from earlier time steps.
 
 RNNs can be trained using backpropagation through time, which follows the
 dependencies across the sequence to calculate gradients. Gradients may shrink or
@@ -91,7 +91,5 @@ task.
 
 A \emph{chronological holdout} reserves a final period for evaluation after
 model selection. Although this is not itself cross-validation, it complements
-the repeated validation used for tuning. To prevent information leakage,
-learned preprocessing operations, such as scaling, must be fitted using only
-the training portion of each fold. The final holdout must not influence
+the repeated validation used for tuning. The final holdout must not influence
 hyperparameter selection.

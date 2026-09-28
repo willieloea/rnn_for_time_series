@@ -1,0 +1,31 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Final test errors in original units. RNN entries are mean $\pm$ sample standard deviation across initialization seeds 11, 22 and 33. Persistence is deterministic. Bold indicates the lowest unrounded mean in each row, including persistence; it does not indicate statistical significance. $N$ counts observed test targets.}
+\label{tab:final-errors}
+\begin{tabular}{llrrrrr}
+\toprule
+Dataset / target & Metric & $N$ & Elman & Jordan & Multi & Persistence \\
+\midrule
+Air passengers & MAE & 24 & 66.839 $\pm$ 10.259 & 60.587 $\pm$ 4.737 & 65.360 $\pm$ 3.292 & \textbf{44.208} \\
+ & RMSE & 24 & 80.303 $\pm$ 10.780 & 79.682 $\pm$ 6.765 & 76.290 $\pm$ 2.299 & \textbf{51.782} \\
+\addlinespace
+Minimum temperatures & MAE & 730 & \textbf{1.742 $\pm$ 0.007} & 1.854 $\pm$ 0.016 & 1.747 $\pm$ 0.006 & 1.953 \\
+ & RMSE & 730 & \textbf{2.203 $\pm$ 0.004} & 2.346 $\pm$ 0.016 & 2.208 $\pm$ 0.005 & 2.481 \\
+\addlinespace
+Smart home: dining room & MAE & 670 & 0.0336 $\pm$ 0.0146 & 0.0325 $\pm$ 0.0068 & \textbf{0.0255 $\pm$ 0.0023} & 0.1176 \\
+ & RMSE & 670 & 0.0421 $\pm$ 0.0156 & 0.0417 $\pm$ 0.0079 & \textbf{0.0332 $\pm$ 0.0019} & 0.1345 \\
+\addlinespace
+Smart home: bedroom & MAE & 670 & 0.0305 $\pm$ 0.0013 & 0.0349 $\pm$ 0.0029 & \textbf{0.0287 $\pm$ 0.0038} & 0.1138 \\
+ & RMSE & 670 & 0.0395 $\pm$ 0.0019 & 0.0475 $\pm$ 0.0020 & \textbf{0.0391 $\pm$ 0.0047} & 0.1347 \\
+\addlinespace
+Sunspots & MAE & 264 & \textbf{11.902 $\pm$ 0.400} & 12.097 $\pm$ 0.219 & 12.778 $\pm$ 0.354 & 12.595 \\
+ & RMSE & 264 & \textbf{16.793 $\pm$ 0.452} & 16.912 $\pm$ 0.167 & 17.515 $\pm$ 0.509 & 17.834 \\
+\addlinespace
+AR(2) & MAE & 1000 & 0.8163 $\pm$ 0.0022 & \textbf{0.8140 $\pm$ 0.0037} & 0.8156 $\pm$ 0.0069 & 0.8699 \\
+ & RMSE & 1000 & 1.0193 $\pm$ 0.0019 & \textbf{1.0185 $\pm$ 0.0074} & 1.0195 $\pm$ 0.0060 & 1.0868 \\
+\addlinespace
+\bottomrule
+\end{tabular}
+\par\smallskip\footnotesize Units: passengers in thousands; temperatures in $^\circ$C; sunspots as an index; AR(2) in arbitrary units.
+\end{table*}

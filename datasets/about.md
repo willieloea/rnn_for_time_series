@@ -5,7 +5,8 @@ Jordan, and multi-recurrent networks required by [the assignment](../README.md).
 
 Links to the original datasets are stored in this document, and cleaned versions
 of the datasets used for this assignment can be created by running the
-`*_cleaner.py` scripts inside this `datasets/` directory.
+`*_cleaner.py` scripts inside this `datasets/` directory. The synthetic AR(2)
+series is created with `ar2_generator.py` instead.
 
 ## Air passengers - `air_passengers_cleaned.csv`
 Captures: Monthly totals of international airline passengers, measured in
@@ -31,8 +32,73 @@ Miscellaneous:
   seasonal baseline that predicts the value from the same month of the previous
   year, and report errors after inverting any transformations.
 
-## Mackey-Glass
-To do.
+## Synthetic AR(2) - `ar2_cleaned.csv`
+
+Captures: A dimensionless random signal with dependence on its previous two
+values, generated locally rather than downloaded:
+
+```text
+x[t] = 0.6*x[t-1] + 0.2*x[t-2] + epsilon[t]
+epsilon[t] independently follows Normal(mean=0, standard deviation=1)
+```
+
+Source: Our reproducible `ar2_generator.py`. Autoregression is described in
+[Forecasting: Principles and Practice](https://otexts.com/fpp3/AR.html).
+These particular coefficients and sample sizes are assignment design choices,
+not a standard published benchmark configuration.
+
+Stationarity: The process has a stationary solution: the roots of
+`1 - 0.6*z - 0.2*z²` are approximately 1.193 and -4.193, both outside the
+unit circle. Its theoretical mean is zero and variance is 50/21 (about 2.381).
+Starting from two zero values introduces a transient; discarding 1,000 steps
+makes the retained series approximately a sample from this stationary process.
+Stationary does not mean constant: individual values still fluctuate.
+
+Generation defaults:
+- Retain 5,000 samples after 1,000 warm-up steps; use NumPy PCG64 seed 2026.
+- Save the generated source as `time_series/ar2/ar2.csv`, a byte-identical
+  pipeline copy as `ar2_cleaned.csv`, and settings, library versions and source
+  SHA-256 in `time_series/ar2/generation.json`.
+- `Date` supplies artificial daily labels starting 2000-01-01 for compatibility
+  with the pipeline. These are not real dates of measurement.
+- `value` is both input and target, in arbitrary units. No missing values,
+  interpolation, differencing, or observed flag is needed.
+- Rerunning replaces the generated files deterministically in the same environment.
+  The generation seed is separate from neural-network initialization seeds.
+
+Run from `datasets/`:
+
+```bash
+uv run python ar2_generator.py
+```
+
+From the repository root, inspect development folds:
+
+```bash
+uv run python -m assignment3.prepare_data ar2
+uv run python -m assignment3.prepare_data ar2 --strategy sliding
+```
+
+The preset uses lookback 2, horizon 1, a final 1,000-row test block, initial/fixed
+training size 2,000, and four 500-row validation blocks. Scaling is fitted on
+training rows only. These choices are fixed before inspecting test results.
+The AR(2) entry point reuses the shared runner while preserving its source hashes
+for existing runs. Launch experiments separately from the repository root:
+
+```bash
+uv run python -m assignment3.ar2_experiments cv --output runs/cv_ar2 --hidden-sizes 8 16 32 --seeds 42
+```
+
+AR(2) cross-validation and final evaluations are complete. Final evaluations use
+initialization seeds 11, 22 and 33; see [the results](../report/tables/final_results.md).
+
+Relevance: This is a controlled test of learning short linear temporal dependence,
+complementing the real datasets. Persistence remains the implemented baseline.
+An additional useful reference is the known conditional-mean predictor
+`0.6*x[t] + 0.2*x[t-1]` for `x[t+1]`: its population MSE is 1 and population
+RMSE is 1. Finite-sample scores vary. This oracle is not yet implemented in the
+runner, and RNNs are not expected to outperform it in expected squared error.
+It does not test nonlinear or long-memory forecasting.
 
 ## Melbourne minimum temperatures - `min_temps_cleaned.csv`
 Captures: Daily minimum temperatures in Melbourne, Australia, over 1981–1990.
